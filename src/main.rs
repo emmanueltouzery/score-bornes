@@ -72,19 +72,29 @@ fn main() {
     let fname = env::args().skip(1).next().unwrap();
     let mut blue_pixels = vec![];
     let mut red_pixels = vec![];
+    let mut black_pixels = vec![];
+    let mut neighbour_is_whitish = false;
     if let image::DynamicImage::ImageRgb8(mut img) =
         image::open(fname)
             .unwrap()
             .resize(300, 300, image::imageops::FilterType::Nearest)
     {
-        for x in 0..img.width() {
-            for y in 0..img.height() {
+        for y in 0..img.height() {
+            for x in 0..img.width() {
                 let image::Rgb([r, g, b]) = img.get_pixel(x, y);
                 if r < &150 && r + 4 < *g && g + 4 < *b {
                     blue_pixels.push((x, y));
+                    neighbour_is_whitish = false;
                 } else if *r > 140 && *r - 80 > *g && *r - 80 > *b {
-                    println!("{} {} {}", r, g, b);
                     red_pixels.push((x, y));
+                    neighbour_is_whitish = false;
+                } else if neighbour_is_whitish && *r < 60 && *g < 60 && *b < 60 {
+                    black_pixels.push((x, y));
+                    neighbour_is_whitish = false;
+                } else if *r > 150 && *g > 150 && *b > 150 {
+                    neighbour_is_whitish = true;
+                } else {
+                    neighbour_is_whitish = false;
                 }
             }
         }
@@ -97,6 +107,11 @@ fn main() {
         let red_areas = pixels_find_contiguous_areas(&red_pixels);
         for area in red_areas {
             draw_area(&mut img, area, image::Rgb([255, 0, 0]));
+        }
+        println!("black pixels: {}", black_pixels.len());
+        let black_areas = pixels_find_contiguous_areas(&black_pixels);
+        for area in black_areas {
+            draw_area(&mut img, area, image::Rgb([255, 255, 255]));
         }
         img.save("out.png").unwrap();
     } else {
@@ -133,8 +148,8 @@ fn pixels_find_contiguous_areas(pixels: &Vec<Coord>) -> Vec<BoundingBox> {
     });
 
     println!("areas: {}", areas.len());
-    let large_areas: Vec<_> = areas.into_iter().filter(|a| a.points_count > 20).collect();
-    println!("large blue areas: {:?}", large_areas);
+    let large_areas: Vec<_> = areas; //.into_iter().filter(|a| a.points_count > 20).collect();
+    println!("large areas: {:?}", large_areas);
     let lba_fst = *large_areas.first().unwrap();
     large_areas
         .into_iter()
