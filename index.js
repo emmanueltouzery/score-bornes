@@ -29,7 +29,12 @@ const constraints = {
       min: HEIGHT,
       ideal: HEIGHT,
       max: HEIGHT
-    }
+    },
+    advanced: [
+      {
+        facingMode: "environment"
+      }
+    ]
   }
 };
 
