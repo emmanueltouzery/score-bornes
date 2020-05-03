@@ -60,7 +60,7 @@ play.onclick = () => {
     };
     startStream(updatedConstraints);
   }
-  setInterval(findCards, 5000);
+  setInterval(findCards, 500);
 };
 
 const findCards = () => {
@@ -94,13 +94,6 @@ const findCards = () => {
 
   const ctx2 = window.bboxes.getContext("2d");
   ctx2.clearRect(0, 0, window.bboxes.width, window.bboxes.height);
-  ctx2.beginPath();
-  ctx2.moveTo(10, 10);
-  ctx2.lineTo(20, 20);
-  ctx2.stroke();
-  ctx2.moveTo(320, 240);
-  ctx2.lineTo(300, 220);
-  ctx2.stroke();
 
   ctx2.strokeStyle = "blue";
   for (let i = 0; i < blueAreas.length; i++) {
