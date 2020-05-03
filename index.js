@@ -74,8 +74,9 @@ const findCards = () => {
   const data = ctx.getImageData(0, 0, WIDTH, HEIGHT).data;
   const bluePixels = [];
   const redPixels = [];
-  const blackPixels = [];
+  const blackContrastyPixels = [];
   let offset = 0;
+  let neighbourIsWhitish = false;
   for (let y = 0; y < HEIGHT; y++) {
     for (let x = 0; x < WIDTH; x++) {
       const red = data[offset];
@@ -83,8 +84,17 @@ const findCards = () => {
       const blue = data[offset + 2];
       if (red < 150 && red + 4 < green && green + 4 < blue) {
         bluePixels.push([x, y]);
+        neighbourIsWhitish = false;
       } else if (red > 140 && red - 80 > green && red - 80 > blue) {
         redPixels.push([x, y]);
+        neighbourIsWhitish = false;
+      } else if (neighbourIsWhitish && red < 60 && green < 60 && blue < 60) {
+        blackContrastyPixels.push([x, y]);
+        neighbourIsWhitish = false;
+      } else if (red > 150 && green > 150 && blue > 150) {
+        neighbourIsWhitish = true;
+      } else {
+        neighbourIsWhitish = false;
       }
       offset += 4;
     }
@@ -97,6 +107,12 @@ const findCards = () => {
   const redAreas = pixelsFindContiguousAreas(redPixels);
   console.log("red areas: " + redAreas.length);
 
+  console.log(
+    "Found " + blackContrastyPixels.length + " blackContrasty pixels"
+  );
+  const blackContrastyAreas = pixelsFindContiguousAreas(blackContrastyPixels);
+  console.log("blackContrasty areas: " + blackContrastyAreas.length);
+
   const ctx2 = window.bboxes.getContext("2d");
   ctx2.clearRect(0, 0, window.bboxes.width, window.bboxes.height);
 
@@ -107,6 +123,10 @@ const findCards = () => {
   ctx2.strokeStyle = "red";
   for (let i = 0; i < redAreas.length; i++) {
     drawArea(ctx2, redAreas[i]);
+  }
+  ctx2.strokeStyle = "black";
+  for (let i = 0; i < blackContrastyAreas.length; i++) {
+    drawArea(ctx2, blackContrastyAreas[i]);
   }
 };
 
