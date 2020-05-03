@@ -71,8 +71,8 @@ const findCards = () => {
   const redPixels = [];
   const blackPixels = [];
   let offset = 0;
-  for (let x = 0; x < WIDTH; x++) {
-    for (let y = 0; y < HEIGHT; y++) {
+  for (let y = 0; y < HEIGHT; y++) {
+    for (let x = 0; x < WIDTH; x++) {
       const red = data[offset];
       const green = data[offset + 1];
       const blue = data[offset + 2];
@@ -81,12 +81,12 @@ const findCards = () => {
       }
       offset += 4;
     }
-    offset += 4;
   }
   console.log("Found " + bluePixels.length + " blue pixels");
   const areas = pixelsFindContiguousAreas(bluePixels);
   console.log("blue areas: " + areas.length);
   const ctx2 = window.bboxes.getContext("2d");
+  ctx2.clearRect(0, 0, window.bboxes.width, window.bboxes.height);
   ctx2.beginPath();
   ctx2.moveTo(10, 10);
   ctx2.lineTo(20, 20);
@@ -94,7 +94,6 @@ const findCards = () => {
   ctx2.moveTo(320, 240);
   ctx2.lineTo(300, 220);
   ctx2.stroke();
-  ctx2.clearRect(0, 0, window.bboxes.width, window.bboxes.height);
   for (let i = 0; i < areas.length; i++) {
     drawArea(ctx2, areas[i]);
   }
@@ -106,7 +105,7 @@ const drawArea = (ctx, area) => {
   ctx.lineTo(area.bottomRight[0], area.topLeft[1]);
   ctx.lineTo(area.bottomRight[0], area.bottomRight[1]);
   ctx.lineTo(area.topLeft[0], area.bottomRight[1]);
-  ctx.moveTo(area.topLeft[0], area.topLeft[1]);
+  ctx.lineTo(area.topLeft[0], area.topLeft[1]);
   ctx.stroke();
 };
 
