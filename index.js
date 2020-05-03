@@ -65,8 +65,27 @@ const findCards = () => {
   console.log("got cards");
   ctx.drawImage(video, 0, 0);
   const data = ctx.getImageData(0, 0, WIDTH, HEIGHT).data;
-  console.log("got data");
+  const bluePixels = [];
+  const redPixels = [];
+  const blackPixels = [];
+  let offset = 0;
+  for (let x = 0; x < WIDTH; x++) {
+    for (let y = 0; y < HEIGHT; y++) {
+      const red = data[offset];
+      const green = data[offset + 1];
+      const blue = data[offset + 2];
+      if (red < 150 && red + 4 < green && green + 4 < blue) {
+        bluePixels.push([x, y]);
+      }
+      offset += 4;
+    }
+    offset += 4;
+  }
+  console.log("Found " + bluePixels.length + " blue pixels");
 };
+
+// brute force
+const pixelsFindContiguousAreas = pixels => {};
 
 const pauseStream = () => {
   video.pause();
