@@ -78,13 +78,20 @@ const findCards = () => {
       const blue = data[offset + 2];
       if (red < 150 && red + 4 < green && green + 4 < blue) {
         bluePixels.push([x, y]);
+      } else if (red > 140 && red - 80 > green && red - 80 > blue) {
+        redPixels.push([x, y]);
       }
       offset += 4;
     }
   }
   console.log("Found " + bluePixels.length + " blue pixels");
-  const areas = pixelsFindContiguousAreas(bluePixels);
-  console.log("blue areas: " + areas.length);
+  const blueAreas = pixelsFindContiguousAreas(bluePixels);
+  console.log("blue areas: " + blueAreas.length);
+
+  console.log("Found " + redPixels.length + " red pixels");
+  const redAreas = pixelsFindContiguousAreas(redPixels);
+  console.log("red areas: " + redAreas.length);
+
   const ctx2 = window.bboxes.getContext("2d");
   ctx2.clearRect(0, 0, window.bboxes.width, window.bboxes.height);
   ctx2.beginPath();
@@ -94,8 +101,14 @@ const findCards = () => {
   ctx2.moveTo(320, 240);
   ctx2.lineTo(300, 220);
   ctx2.stroke();
-  for (let i = 0; i < areas.length; i++) {
-    drawArea(ctx2, areas[i]);
+
+  ctx2.strokeStyle = "blue";
+  for (let i = 0; i < blueAreas.length; i++) {
+    drawArea(ctx2, blueAreas[i]);
+  }
+  ctx2.strokeStyle = "red";
+  for (let i = 0; i < redAreas.length; i++) {
+    drawArea(ctx2, redAreas[i]);
   }
 };
 
@@ -111,6 +124,9 @@ const drawArea = (ctx, area) => {
 
 // brute force
 const pixelsFindContiguousAreas = coords => {
+  if (coords.length === 0) {
+    return [];
+  }
   const areas = coords.reduce(
     (soFar, cur) => {
       const existing = soFar.find(bbox => bbox.sqDistance(cur) < 6);
@@ -123,7 +139,18 @@ const pixelsFindContiguousAreas = coords => {
     },
     [new BoundingBox(coords[0])]
   );
-  return areas;
+  return areas.reduce(
+    (soFar, cur) => {
+      const existing = soFar.find(a => a.intersects(cur));
+      if (existing) {
+        existing.combine(cur);
+      } else {
+        soFar.push(cur);
+      }
+      return soFar;
+    },
+    [areas[0]]
+  );
 };
 
 const pauseStream = () => {
