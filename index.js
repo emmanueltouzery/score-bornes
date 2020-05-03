@@ -7,9 +7,11 @@ const screenshotImage = document.querySelector("img");
 const buttons = [...controls.querySelectorAll("button")];
 let streamStarted = false;
 const computeCanvas = document.createElement("canvas");
-const WIDTH = 1280;
-const HEIGHT = 720;
+const WIDTH = 320;
+const HEIGHT = 240;
 
+window.bboxes.width = WIDTH;
+window.bboxes.height = HEIGHT;
 computeCanvas.width = WIDTH;
 computeCanvas.height = HEIGHT;
 const ctx = computeCanvas.getContext("2d");
@@ -58,7 +60,7 @@ play.onclick = () => {
     };
     startStream(updatedConstraints);
   }
-  setInterval(findCards, 200);
+  setInterval(findCards, 5000);
 };
 
 const findCards = () => {
@@ -82,10 +84,48 @@ const findCards = () => {
     offset += 4;
   }
   console.log("Found " + bluePixels.length + " blue pixels");
+  const areas = pixelsFindContiguousAreas(bluePixels);
+  console.log("blue areas: " + areas.length);
+  const ctx2 = window.bboxes.getContext("2d");
+  ctx2.beginPath();
+  ctx2.moveTo(10, 10);
+  ctx2.lineTo(20, 20);
+  ctx2.stroke();
+  ctx2.moveTo(320, 240);
+  ctx2.lineTo(300, 220);
+  ctx2.stroke();
+  ctx2.clearRect(0, 0, window.bboxes.width, window.bboxes.height);
+  for (let i = 0; i < areas.length; i++) {
+    drawArea(ctx2, areas[i]);
+  }
+};
+
+const drawArea = (ctx, area) => {
+  ctx.beginPath();
+  ctx.moveTo(area.topLeft[0], area.topLeft[1]);
+  ctx.lineTo(area.bottomRight[0], area.topLeft[1]);
+  ctx.lineTo(area.bottomRight[0], area.bottomRight[1]);
+  ctx.lineTo(area.topLeft[0], area.bottomRight[1]);
+  ctx.moveTo(area.topLeft[0], area.topLeft[1]);
+  ctx.stroke();
 };
 
 // brute force
-const pixelsFindContiguousAreas = pixels => {};
+const pixelsFindContiguousAreas = coords => {
+  const areas = coords.reduce(
+    (soFar, cur) => {
+      const existing = soFar.find(bbox => bbox.sqDistance(cur) < 6);
+      if (existing) {
+        existing.addPoint(cur);
+      } else {
+        soFar.push(new BoundingBox(cur));
+      }
+      return soFar;
+    },
+    [new BoundingBox(coords[0])]
+  );
+  return areas;
+};
 
 const pauseStream = () => {
   video.pause();
@@ -126,3 +166,63 @@ const getCameraSelection = async () => {
 };
 
 getCameraSelection();
+
+class BoundingBox {
+  constructor(point) {
+    this.topLeft = point;
+    this.bottomRight = [...point];
+  }
+
+  center() {
+    return [
+      this.topLeft[0] + (this.bottomRight[0] - this.topLeft[0]) / 2,
+      this.topLeft[1] + (this.bottomRight[1] - this.topLeft[1]) / 2
+    ];
+  }
+
+  // https://gamedev.stackexchange.com/a/44496
+  sqDistance([px, py]) {
+    const [x, y] = this.center();
+    const width = this.bottomRight[0] - this.topLeft[0];
+    const height = this.bottomRight[1] - this.topLeft[1];
+    const dx = Math.max(Math.abs(px - x) - width / 2, 0);
+    const dy = Math.max(Math.abs(py - y) - height / 2, 0);
+    return dx * dx + dy * dy;
+  }
+
+  addPoint([x, y]) {
+    if (x < this.topLeft[0]) {
+      this.topLeft[0] = x;
+    } else if (x > this.bottomRight[0]) {
+      this.bottomRight[0] = x;
+    }
+    if (y > this.bottomRight[1]) {
+      this.bottomRight[1] = y;
+    } else if (y < this.topLeft[1]) {
+      this.topLeft[1] = y;
+    }
+  }
+
+  intersects(other) {
+    // one rectangle is on left side of other
+    if (
+      this.bottomRight[0] < other.topLeft[0] ||
+      this.topLeft[0] > other.bottomRight[0]
+    ) {
+      return false;
+    }
+    // one rectangle is above other
+    if (
+      this.bottomRight[1] < other.topLeft[1] ||
+      this.topLeft[1] > this.bottomRight[1]
+    ) {
+      return false;
+    }
+    return true;
+  }
+
+  combine(other) {
+    this.addPoint(other.topLeft);
+    this.addPoint(other.bottomRight);
+  }
+}
