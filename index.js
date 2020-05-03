@@ -6,20 +6,27 @@ const canvas = document.querySelector("canvas");
 const screenshotImage = document.querySelector("img");
 const buttons = [...controls.querySelectorAll("button")];
 let streamStarted = false;
+const computeCanvas = document.createElement("canvas");
+const WIDTH = 1280;
+const HEIGHT = 720;
+
+computeCanvas.width = WIDTH;
+computeCanvas.height = HEIGHT;
+const ctx = computeCanvas.getContext("2d");
 
 const [play, pause, screenshot] = buttons;
 
 const constraints = {
   video: {
     width: {
-      min: 1280,
-      ideal: 1920,
-      max: 2560
+      min: WIDTH,
+      ideal: WIDTH,
+      max: WIDTH
     },
     height: {
-      min: 720,
-      ideal: 1080,
-      max: 1440
+      min: HEIGHT,
+      ideal: HEIGHT,
+      max: HEIGHT
     }
   }
 };
@@ -51,6 +58,14 @@ play.onclick = () => {
     };
     startStream(updatedConstraints);
   }
+  setInterval(findCards, 200);
+};
+
+const findCards = () => {
+  console.log("got cards");
+  ctx.drawImage(video, 0, 0);
+  const data = ctx.getImageData(0, 0, WIDTH, HEIGHT).data;
+  console.log("got data");
 };
 
 const pauseStream = () => {
